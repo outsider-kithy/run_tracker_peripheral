@@ -15,28 +15,80 @@ static BLEServer* pServer = nullptr;
 static BLECharacteristic* pCharacteristic = nullptr;
 static bool deviceConnected = false;
 
-class MyServerCallbacks : public BLEServerCallbacks {
-  void onConnect(BLEServer* pServer) override {
-    deviceConnected = true;
+class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
+  //存在するJSONファイル一覧をBLEで送信
+  void sendFileList() {
+    File root = LittleFS.open("/");
+    File file = root.openNextFile();
+
+    String list = "";
+
+    while (file) {
+      list += String(file.name()) + ",";
+      file = root.openNextFile();
+    }
+
+    pCharacteristic->setValue(list.c_str());
+    pCharacteristic->notify();
   }
-  void onDisconnect(BLEServer* pServer) override {
-    deviceConnected = false;
-    pServer->startAdvertising();
+
+  //JSONファイルをチャンクに分けて送信
+  void sendFileInChunks(String filename) {
+
+    File file = LittleFS.open(filename, "r");
+    if (!file) return;
+
+    const int chunkSize = 180; // 安全サイズ
+    uint8_t buffer[chunkSize];
+
+    while (file.available()) {
+      int len = file.read(buffer, chunkSize);
+
+      pCharacteristic->setValue(buffer, len);
+      pCharacteristic->notify();
+
+      delay(20); // BLE詰まり防止
+    }
+
+    file.close();
+
+    // 送信終了マーカー
+    pCharacteristic->setValue("EOF");
+    pCharacteristic->notify();
+  }
+
+  void onWrite(BLECharacteristic* pCharacteristic) override {
+    std::string value = pCharacteristic->getValue();
+    String command = String(value.c_str());
+
+    if (command == "LIST") {
+      sendFileList();
+    }
+    else if (command.startsWith("GET:")) {
+      String filename = command.substring(4);
+      sendFileInChunks(filename);
+    }
   }
 };
 
 void initBLE() {
   BLEDevice::init("M5Stick Run Tracker");
+
   pServer = BLEDevice::createServer();
-  pServer->setCallbacks(new MyServerCallbacks());
 
   BLEService* pService = pServer->createService(SERVICE_UUID);
+
   pCharacteristic = pService->createCharacteristic(
     CHARACTERISTIC_UUID,
-    BLECharacteristic::PROPERTY_READ | BLECharacteristic::PROPERTY_NOTIFY
+    BLECharacteristic::PROPERTY_READ | 
+    BLECharacteristic::PROPERTY_NOTIFY | 
+    BLECharacteristic::PROPERTY_WRITE
   );
 
+  pCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
+
   pCharacteristic->addDescriptor(new BLE2902());
+  
   pService->start();
 
   BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
@@ -44,38 +96,6 @@ void initBLE() {
   pAdvertising->setScanResponse(true);
   BLEDevice::startAdvertising();
 }
-
-// void sendDataViaBLE(const std::vector<std::pair<double, double>>& path,
-//                     double totalDistance,
-//                     int steps,
-//                     int elapsedSeconds) {
-                      
-//   // --- JSON生成 ---
-//   String json = "{";
-//   json += "\"points\":[";
-
-//   for (size_t i = 0; i < path.size(); i++) {
-//     json += String("{\"lat\":") + String(path[i].first, 6) +
-//             ",\"lng\":" + String(path[i].second, 6) + "}";
-//     if (i < path.size() - 1) json += ",";
-//   }
-
-//   json += "],";
-//   json += "\"distance\":" + String(totalDistance, 2) + ",";
-//   json += "\"steps\":" + String(steps) + ",";
-//   json += "\"elapsedSeconds\":" + String(elapsedSeconds) + ",";
-//   json += "\"startDate\":\"" + startDate + "\",";
-//   json += "\"endDate\":\"" + endDate + "\"";
-//   json += "}";
-
-//   // --- BLE特性に書き込み ---
-//   pCharacteristic->setValue(json.c_str());
-//   pCharacteristic->notify();  // 通知送信
-
-//   M5.Lcd.println("BLE data sent!");
-//   Serial.println("Sent via BLE:");
-//   Serial.println(json);
-// }
 
 void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
                        double totalDistance,
@@ -102,10 +122,6 @@ void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
   json += "\"endDate\":\"" + endDate + "\"";
   json += "}";
 
-  // --- BLE特性に書き込み ---
-  // pCharacteristic->setValue(json.c_str());
-  // pCharacteristic->notify();  // 通知送信
-
   Serial.println(json);
 
   // --- ファイル名生成（例：/run_1700000000.json） ---
@@ -124,6 +140,7 @@ void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
   file.close();
 }
 
+//JSONファイル一覧を表示
 void listFiles() {
     File root = LittleFS.open("/");
     File file = root.openNextFile();
@@ -134,4 +151,5 @@ void listFiles() {
         file = root.openNextFile();
     }
     Serial.println("-------------------");
-  }
+}
+
