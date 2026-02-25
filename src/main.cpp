@@ -1,3 +1,4 @@
+#include <LittleFS.h>
 #include <M5Unified.h>
 #include "ble_handler.h"
 
@@ -12,8 +13,19 @@ enum State {
 State currentState = INIT;
 
 void setup() {
+
+  Serial.begin(115200);
+  
   M5.begin();
+  M5.Lcd.setRotation(3);
+  M5.Lcd.setTextSize(2);
   M5.Lcd.println("Initializing...");
+
+  if(!LittleFS.begin(true)){
+    Serial.println("LittleFS Mount Failed");
+    return;
+  }
+  Serial.println("LittleFS Mounted!");
 
   setupGPS();
   setupSteps();
@@ -30,6 +42,7 @@ void loop() {
   switch (currentState) {
     case WAIT_FOR_START:
       if (M5.BtnA.wasPressed()) {
+        M5.Lcd.setTextColor(YELLOW);
         M5.Lcd.println("Tracking started!");
         isRecording = true;
         currentState = TRACKING;
@@ -43,14 +56,18 @@ void loop() {
 
       if (M5.BtnA.wasPressed()) {
         isRecording = false;
-        M5.Lcd.println("Sending via BLE...");
+        M5.Lcd.setTextColor(WHITE);
+        M5.Lcd.println("Saving data...");
         currentState = SENDING;
       }
       break;
 
     case SENDING:
-      sendDataViaBLE(path, totalDistance, steps, elapsedSeconds);
-      M5.Lcd.println("Data sent via BLE!");
+      //sendDataViaBLE(path, totalDistance, steps, elapsedSeconds);
+      saveRunDataToFile(path, totalDistance, steps, elapsedSeconds);
+      listFiles(); 
+      M5.Lcd.setTextColor(RED);
+      M5.Lcd.println("Data was saved!");
       path.clear();
       currentState = DONE;
       break;
@@ -59,3 +76,4 @@ void loop() {
       break;
   }
 }
+

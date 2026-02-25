@@ -3,6 +3,7 @@
 #include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
+#include <LittleFS.h>
 #include "getSteps.h"
 #include "getTime.h"
 #include "getGps.h"
@@ -44,11 +45,45 @@ void initBLE() {
   BLEDevice::startAdvertising();
 }
 
-void sendDataViaBLE(const std::vector<std::pair<double, double>>& path,
-                    double totalDistance,
-                    int steps,
-                    int elapsedSeconds) {
+// void sendDataViaBLE(const std::vector<std::pair<double, double>>& path,
+//                     double totalDistance,
+//                     int steps,
+//                     int elapsedSeconds) {
                       
+//   // --- JSON生成 ---
+//   String json = "{";
+//   json += "\"points\":[";
+
+//   for (size_t i = 0; i < path.size(); i++) {
+//     json += String("{\"lat\":") + String(path[i].first, 6) +
+//             ",\"lng\":" + String(path[i].second, 6) + "}";
+//     if (i < path.size() - 1) json += ",";
+//   }
+
+//   json += "],";
+//   json += "\"distance\":" + String(totalDistance, 2) + ",";
+//   json += "\"steps\":" + String(steps) + ",";
+//   json += "\"elapsedSeconds\":" + String(elapsedSeconds) + ",";
+//   json += "\"startDate\":\"" + startDate + "\",";
+//   json += "\"endDate\":\"" + endDate + "\"";
+//   json += "}";
+
+//   // --- BLE特性に書き込み ---
+//   pCharacteristic->setValue(json.c_str());
+//   pCharacteristic->notify();  // 通知送信
+
+//   M5.Lcd.println("BLE data sent!");
+//   Serial.println("Sent via BLE:");
+//   Serial.println(json);
+// }
+
+void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
+                       double totalDistance,
+                       int steps,
+                       int elapsedSeconds) {
+  
+  Serial.println("saveRunDataToFile called");
+
   // --- JSON生成 ---
   String json = "{";
   json += "\"points\":[";
@@ -68,11 +103,35 @@ void sendDataViaBLE(const std::vector<std::pair<double, double>>& path,
   json += "}";
 
   // --- BLE特性に書き込み ---
-  pCharacteristic->setValue(json.c_str());
-  pCharacteristic->notify();  // 通知送信
+  // pCharacteristic->setValue(json.c_str());
+  // pCharacteristic->notify();  // 通知送信
 
-  M5.Lcd.println("BLE data sent!");
-  Serial.println("Sent via BLE:");
   Serial.println(json);
+
+  // --- ファイル名生成（例：/run_1700000000.json） ---
+  String filename = "/run_" + String(time(nullptr)) + ".json";
+
+  File file = LittleFS.open(filename, "w");
+  if (!file) {
+    Serial.println("Failed to open file for writing");
+    return;
+  }
+
+  Serial.println("saved as ");
+  Serial.println(filename);
+
+  file.print(json);
+  file.close();
 }
 
+void listFiles() {
+    File root = LittleFS.open("/");
+    File file = root.openNextFile();
+
+    Serial.println("---- File List ----");
+    while (file) {
+        Serial.println(file.name());
+        file = root.openNextFile();
+    }
+    Serial.println("-------------------");
+  }
