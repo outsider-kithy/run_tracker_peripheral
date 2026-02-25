@@ -13,6 +13,8 @@ State currentState = INIT;
 
 void setup() {
   M5.begin();
+  M5.Lcd.setRotation(3);
+  M5.Lcd.setTextSize(2);
   M5.Lcd.println("Initializing...");
 
   setupGPS();
@@ -30,6 +32,7 @@ void loop() {
   switch (currentState) {
     case WAIT_FOR_START:
       if (M5.BtnA.wasPressed()) {
+        M5.Lcd.setTextColor(YELLOW);
         M5.Lcd.println("Tracking started!");
         isRecording = true;
         currentState = TRACKING;
@@ -43,14 +46,16 @@ void loop() {
 
       if (M5.BtnA.wasPressed()) {
         isRecording = false;
-        M5.Lcd.println("Sending via BLE...");
+        M5.Lcd.setTextColor(WHITE);
+        M5.Lcd.println("Saving data...");
         currentState = SENDING;
       }
       break;
 
     case SENDING:
       sendDataViaBLE(path, totalDistance, steps, elapsedSeconds);
-      M5.Lcd.println("Data sent via BLE!");
+      M5.Lcd.setTextColor(RED);
+      M5.Lcd.println("Data was saved!");
       path.clear();
       currentState = DONE;
       break;
