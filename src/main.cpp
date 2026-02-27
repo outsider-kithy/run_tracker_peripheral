@@ -63,9 +63,7 @@ void loop() {
       break;
 
     case SENDING:
-      //sendDataViaBLE(path, totalDistance, steps, elapsedSeconds);
       saveRunDataToFile(path, totalDistance, steps, elapsedSeconds);
-      listFiles(); 
       M5.Lcd.setTextColor(RED);
       M5.Lcd.println("Data was saved!");
       path.clear();
@@ -75,5 +73,13 @@ void loop() {
     case DONE:
       break;
   }
+
+   if (syncRequested) {
+        syncRequested = false;
+        txCharacteristic->setValue("READY");
+        txCharacteristic->notify();
+        delay(100);
+        sendAllJsonFiles();
+      }
 }
 

@@ -1,3 +1,4 @@
+#include <vector>
 #include <M5Unified.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -8,68 +9,108 @@
 #include "getTime.h"
 #include "getGps.h"
 
-#define SERVICE_UUID        "12345678-1234-5678-1234-56789abcdef0"
-#define CHARACTERISTIC_UUID "abcd1234-5678-90ab-cdef-1234567890ab"
+#define SERVICE_UUID "12345678-1234-5678-1234-56789abcdef0"
+#define TX_UUID "abcd1234-5678-90ab-cdef-1234567890ac"
+#define RX_UUID "abcd1234-5678-90ab-cdef-1234567890ad"
+
+BLECharacteristic* txCharacteristic;
+BLECharacteristic* rxCharacteristic;
 
 static BLEServer* pServer = nullptr;
-static BLECharacteristic* pCharacteristic = nullptr;
-static bool deviceConnected = false;
 
-class MyCharacteristicCallbacks : public BLECharacteristicCallbacks {
-  //存在するJSONファイル一覧をBLEで送信
-  void sendFileList() {
+volatile bool ackReceived = false;
+volatile bool syncRequested = false;
+
+void waitForAck() {
+
+      unsigned long start = millis();
+
+      while (!ackReceived) {
+        if (millis() - start > 5000) {  // 5秒タイムアウト
+          Serial.println("ACK timeout");
+          break;
+        }
+        delay(5);
+      }
+      ackReceived = false;
+    }
+
+void sendFileWithAck(String path) {
+
+      File file = LittleFS.open(path, "r");
+      if (!file) {
+        Serial.println("File open failed");
+        return;
+      }
+
+      // FILEヘッダ送信
+      txCharacteristic->setValue(("FILE:" + path).c_str());
+      txCharacteristic->notify();
+      waitForAck();
+
+      const int chunkSize = 120;
+      uint8_t buffer[chunkSize];
+
+      while (file.available()) {
+
+        int len = file.read(buffer, chunkSize);
+
+        txCharacteristic->setValue(buffer, len);
+        txCharacteristic->notify();
+
+        waitForAck();
+      }
+
+      file.close();
+
+      // EOF送信
+      txCharacteristic->setValue("EOF");
+      txCharacteristic->notify();
+      waitForAck();
+    }
+
+    
+
+    void sendAllJsonFiles() {
+
     File root = LittleFS.open("/");
     File file = root.openNextFile();
 
-    String list = "";
-
     while (file) {
-      list += String(file.name()) + ",";
+      Serial.println(file);
+      String filename = String(file.name());
+      file.close();
+      root.close();
+
+      if (!filename.startsWith("/")) {
+        filename = "/" + filename;
+      }
+
+      if (filename.endsWith(".json")) {
+        sendFileWithAck(filename);
+      }
+
       file = root.openNextFile();
     }
 
-    pCharacteristic->setValue(list.c_str());
-    pCharacteristic->notify();
+    txCharacteristic->setValue("ALL_DONE");
+    txCharacteristic->notify();
+    waitForAck();
   }
 
-  //JSONファイルをチャンクに分けて送信
-  void sendFileInChunks(String filename) {
-
-    File file = LittleFS.open(filename, "r");
-    if (!file) return;
-
-    const int chunkSize = 180; // 安全サイズ
-    uint8_t buffer[chunkSize];
-
-    while (file.available()) {
-      int len = file.read(buffer, chunkSize);
-
-      pCharacteristic->setValue(buffer, len);
-      pCharacteristic->notify();
-
-      delay(20); // BLE詰まり防止
+class RxCharacteristicCallbacks : public BLECharacteristicCallbacks {
+  void onWrite(BLECharacteristic *pChar) {
+    std::string value = pChar->getValue();
+    if (value == "ACK") {
+      ackReceived = true;
     }
-
-    file.close();
-
-    // 送信終了マーカー
-    pCharacteristic->setValue("EOF");
-    pCharacteristic->notify();
-  }
-
-  void onWrite(BLECharacteristic* pCharacteristic) override {
-    std::string value = pCharacteristic->getValue();
-    String command = String(value.c_str());
-
-    if (command == "LIST") {
-      sendFileList();
-    }
-    else if (command.startsWith("GET:")) {
-      String filename = command.substring(4);
-      sendFileInChunks(filename);
+    if (value == "SYNC") {
+      Serial.println("SYNC received");
+      syncRequested = true;
     }
   }
 };
+
 
 void initBLE() {
   BLEDevice::init("M5Stick Run Tracker");
@@ -78,17 +119,25 @@ void initBLE() {
 
   BLEService* pService = pServer->createService(SERVICE_UUID);
 
-  pCharacteristic = pService->createCharacteristic(
-    CHARACTERISTIC_UUID,
-    BLECharacteristic::PROPERTY_READ | 
-    BLECharacteristic::PROPERTY_NOTIFY | 
+  //
+  // 🔹 TX (M5 → Flutter 通知専用)
+  //
+  txCharacteristic =  pService->createCharacteristic(
+    TX_UUID,
+    BLECharacteristic::PROPERTY_NOTIFY
+  );
+  
+  txCharacteristic->addDescriptor(new BLE2902());
+
+  //
+  // 🔹 RX (Flutter → M5 書き込み専用)
+  //
+  rxCharacteristic = pService->createCharacteristic(
+    RX_UUID,
     BLECharacteristic::PROPERTY_WRITE
   );
+  rxCharacteristic->setCallbacks(new RxCharacteristicCallbacks());
 
-  pCharacteristic->setCallbacks(new MyCharacteristicCallbacks());
-
-  pCharacteristic->addDescriptor(new BLE2902());
-  
   pService->start();
 
   BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
@@ -96,6 +145,8 @@ void initBLE() {
   pAdvertising->setScanResponse(true);
   BLEDevice::startAdvertising();
 }
+
+
 
 void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
                        double totalDistance,
@@ -140,16 +191,4 @@ void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
   file.close();
 }
 
-//JSONファイル一覧を表示
-void listFiles() {
-    File root = LittleFS.open("/");
-    File file = root.openNextFile();
-
-    Serial.println("---- File List ----");
-    while (file) {
-        Serial.println(file.name());
-        file = root.openNextFile();
-    }
-    Serial.println("-------------------");
-}
-
+ 
