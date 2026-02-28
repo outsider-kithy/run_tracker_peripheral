@@ -1,4 +1,5 @@
 #include <vector>
+#include <algorithm>
 #include <M5Unified.h>
 #include <BLEDevice.h>
 #include <BLEServer.h>
@@ -54,7 +55,6 @@ void sendFileWithAck(String path) {
       while (file.available()) {
 
         int len = file.read(buffer, chunkSize);
-
         txCharacteristic->setValue(buffer, len);
         txCharacteristic->notify();
 
@@ -64,9 +64,9 @@ void sendFileWithAck(String path) {
       file.close();
 
       // EOF送信
-      // txCharacteristic->setValue("EOF\n");
-      // txCharacteristic->notify();
-      // waitForAck();
+      txCharacteristic->setValue("EOF\n");
+      txCharacteristic->notify();
+      waitForAck();
     }
 
     
@@ -74,23 +74,34 @@ void sendFileWithAck(String path) {
     void sendAllJsonFiles() {
 
     File root = LittleFS.open("/");
+    if (!root) {
+      Serial.println("Failed to open root directory");
+      return;
+    }
+
+    std::vector<String> jsonFiles;
     File file = root.openNextFile();
 
     while (file) {
-      Serial.println(file);
       String filename = String(file.name());
-      file.close();
-      root.close();
-
       if (!filename.startsWith("/")) {
         filename = "/" + filename;
       }
 
-      if (filename.endsWith(".json")) {
-        sendFileWithAck(filename);
+      if (!file.isDirectory() && filename.endsWith(".json")) {
+        jsonFiles.push_back(filename);
       }
 
+      file.close();
       file = root.openNextFile();
+    }
+    root.close();
+
+    std::sort(jsonFiles.begin(), jsonFiles.end());
+
+    for (const auto& filename : jsonFiles) {
+      Serial.printf("Sending: %s\n", filename.c_str());
+      sendFileWithAck(filename);
     }
 
     txCharacteristic->setValue("ALL_DONE\n");
