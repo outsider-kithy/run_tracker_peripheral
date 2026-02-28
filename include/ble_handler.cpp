@@ -44,7 +44,7 @@ void sendFileWithAck(String path) {
       }
 
       // FILEヘッダ送信
-      txCharacteristic->setValue(("FILE:" + path).c_str());
+      txCharacteristic->setValue(("FILE:" + path + "\n").c_str());
       txCharacteristic->notify();
       waitForAck();
 
@@ -64,9 +64,9 @@ void sendFileWithAck(String path) {
       file.close();
 
       // EOF送信
-      txCharacteristic->setValue("EOF");
-      txCharacteristic->notify();
-      waitForAck();
+      // txCharacteristic->setValue("EOF\n");
+      // txCharacteristic->notify();
+      // waitForAck();
     }
 
     
@@ -93,7 +93,7 @@ void sendFileWithAck(String path) {
       file = root.openNextFile();
     }
 
-    txCharacteristic->setValue("ALL_DONE");
+    txCharacteristic->setValue("ALL_DONE\n");
     txCharacteristic->notify();
     waitForAck();
   }
