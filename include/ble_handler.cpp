@@ -21,6 +21,7 @@ static BLEServer* pServer = nullptr;
 
 volatile bool ackReceived = false;
 volatile bool syncRequested = false;
+volatile bool deleteRequested = false;
 
 void waitForAck() {
 
@@ -96,9 +97,40 @@ void sendFileWithAck() {
   Serial.println("All files listed.");
   root.close();
 
-  txCharacteristic->setValue("ALL_DONE\n");
+  txCharacteristic->setValue("ALL_DONE");
   txCharacteristic->notify();
   waitForAck();
+}
+
+//JSONファイルを削除
+void deleteAllJsonFiles() {
+
+  if(deleteRequested){
+    File root = LittleFS.open("/");
+    File file = root.openNextFile();
+
+    while (file) {
+      String filename = String(file.name());
+      file.close();
+
+      if (!filename.startsWith("/")) {
+        filename = "/" + filename;
+      }
+
+      if (filename.endsWith(".json")) {
+        Serial.println("Deleting: " + filename);
+        LittleFS.remove(filename);
+      }
+
+      file = root.openNextFile();
+    }
+
+  root.close();
+
+  txCharacteristic->setValue("DELETE_DONE");
+  txCharacteristic->notify();
+  deleteRequested = false;
+  }
 }
 
 class RxCharacteristicCallbacks : public BLECharacteristicCallbacks {
@@ -110,6 +142,10 @@ class RxCharacteristicCallbacks : public BLECharacteristicCallbacks {
     if (value == "SYNC") {
       Serial.println("SYNC received");
       syncRequested = true;
+    }
+    if (value == "DELETE") {
+      Serial.println("DELETE received");
+      deleteRequested = true;
     }
   }
 };
@@ -194,4 +230,32 @@ void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
   file.close();
 }
 
- 
+//ルートディレクトリにあるJSONファイルを一覧表示
+void listFilesFromRoot(){
+  if(!LittleFS.begin(true)){
+    Serial.println("LittleFS Mount Failed");
+    return;
+  }
+  Serial.println("LittleFS Mounted!");
+    File root = LittleFS.open("/");
+  if (!root || !root.isDirectory()) {
+    Serial.println("- failed to open directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+
+  while (file) {
+    if (file.isDirectory()) {
+      file = root.openNextFile();   // ← 次のファイルへ（無限ループ防止）
+      continue;
+    } else {
+      Serial.println(file.name());
+    }
+    file.close();
+  }
+  if(!file){
+    Serial.println("No JSON Files.");
+  }
+  root.close();
+}

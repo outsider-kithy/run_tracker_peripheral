@@ -21,6 +21,7 @@ void setup() {
   M5.Lcd.setTextSize(2);
   M5.Lcd.println("Initializing...");
 
+  listFilesFromRoot();
   setupGPS();
   setupSteps();
   setupTime();
@@ -74,6 +75,12 @@ void loop() {
         txCharacteristic->notify();
         delay(100);
         sendFileWithAck();
-      }
+    }
+    if(deleteRequested){
+      txCharacteristic->setValue("DELETE_processing...");
+      txCharacteristic->notify();
+      delay(100);
+      deleteAllJsonFiles();
+    }
 }
 
