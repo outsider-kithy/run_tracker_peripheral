@@ -25,7 +25,7 @@ void setupGPS() {
 void updateGPS(){
 
   static unsigned long lastSaveTime = 0;
-  const unsigned long SAVE_INTERVAL = 1000;
+  const unsigned long SAVE_INTERVAL = 60000;
  
   // GPSデータをTinyGPSPlusで解析
   while (GPSserial.available()) {

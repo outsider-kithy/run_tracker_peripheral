@@ -28,7 +28,7 @@ void waitForAck() {
       unsigned long start = millis();
 
       while (!ackReceived) {
-        if (millis() - start > 5000) {  // 5秒タイムアウト
+        if (millis() - start > 100) {  // 0.1秒タイムアウト
           Serial.println("ACK timeout");
           break;
         }

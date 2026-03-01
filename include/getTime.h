@@ -2,15 +2,21 @@
 #include <M5Unified.h>
 #include "rtc_sync.h"
 
-extern bool firstPress;
-extern m5::rtc_time_t startTime, endTime;
 extern String startDate, endDate;
-extern int elapsedSeconds;
+String startDate, endDate;
+
+extern m5::rtc_time_t startTime, endTime;
+m5::rtc_time_t startTime, endTime;
 
 bool firstPress = false;
-m5::rtc_time_t startTime, endTime;
-String startDate, endDate;
-int elapsedSeconds = 0;
+unsigned long startMillis = 0;
+unsigned long endMillis = 0;
+unsigned long elapsedSeconds = 0;
+bool isTracking = false;
+
+void setupTime() {
+  syncRTCFromNTP(); // NTP→RTC同期
+}
 
 // rtc_time_tをStringに変換する関数
 String rtcToString(const m5::rtc_date_t &d, const m5::rtc_time_t &t) {
@@ -21,33 +27,40 @@ String rtcToString(const m5::rtc_date_t &d, const m5::rtc_time_t &t) {
   return String(buffer);
 }
 
-void setupTime() {
-  syncRTCFromNTP(); // NTP→RTC同期
+int toSeconds(const m5::rtc_time_t& t) {
+  return t.hours * 3600 + t.minutes * 60 + t.seconds;
 }
 
 void updateTime() {
   M5.update();
 
-  if (M5.BtnA.wasPressed()) {
-    if (!firstPress) {
+  if (M5.BtnA.wasReleased()) {
+
+    if (!isTracking) {
+      //開始時間をミリ秒として保存
+      startMillis = millis();
+      Serial.printf("START: %lu\n", startMillis);
+
+      //開始時刻を文字列として保存
       startTime = M5.Rtc.getTime();
       startDate = rtcToString(M5.Rtc.getDate(), startTime);
-      firstPress = true;
+
+      isTracking = true;
 
     } else {
+      //終了時刻をミリ秒として保存
+      endMillis = millis();
+     
+      //終了時刻を文字列として保存
       endTime = M5.Rtc.getTime();
       endDate = rtcToString(M5.Rtc.getDate(), endTime);
-      
-      //経過時間を計算
-      int elapsed = (endTime.hours - startTime.hours) * 3600 +
-                    (endTime.minutes - startTime.minutes) * 60 +
-                    (endTime.seconds - startTime.seconds);
 
-      int hours = (int)(elapsed / 3600);
-      int minutes = ((int)elapsed % 3600) / 60;
-      int seconds = (int)elapsed % 60;
-      
-      firstPress = false;
+      //経過時間を計算
+      elapsedSeconds = (endMillis - startMillis) / 1000;
+
+      Serial.printf("Elapsed: %lu sec\n", elapsedSeconds);
+
+      isTracking = false;
     }
   }
 
