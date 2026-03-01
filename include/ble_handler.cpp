@@ -36,78 +36,70 @@ void waitForAck() {
       ackReceived = false;
     }
 
-void sendFileWithAck(String path) {
-
-      File file = LittleFS.open(path, "r");
-      if (!file) {
-        Serial.println("File open failed");
-        return;
-      }
-
-      // FILEヘッダ送信
-      txCharacteristic->setValue(("FILE:" + path + "\n").c_str());
-      txCharacteristic->notify();
-      waitForAck();
-
-      const int chunkSize = 120;
-      uint8_t buffer[chunkSize];
-
-      while (file.available()) {
-
-        int len = file.read(buffer, chunkSize);
-        txCharacteristic->setValue(buffer, len);
-        txCharacteristic->notify();
-
-        waitForAck();
-      }
-
-      file.close();
-
-      // EOF送信
-      txCharacteristic->setValue("EOF\n");
-      txCharacteristic->notify();
-      waitForAck();
-    }
-
-    
-
-    void sendAllJsonFiles() {
-
-    File root = LittleFS.open("/");
-    if (!root) {
-      Serial.println("Failed to open root directory");
-      return;
-    }
-
-    std::vector<String> jsonFiles;
-    File file = root.openNextFile();
-
-    while (file) {
-      String filename = String(file.name());
-      if (!filename.startsWith("/")) {
-        filename = "/" + filename;
-      }
-
-      if (!file.isDirectory() && filename.endsWith(".json")) {
-        jsonFiles.push_back(filename);
-      }
-
-      file.close();
-      file = root.openNextFile();
-    }
-    root.close();
-
-    std::sort(jsonFiles.begin(), jsonFiles.end());
-
-    for (const auto& filename : jsonFiles) {
-      Serial.printf("Sending: %s\n", filename.c_str());
-      sendFileWithAck(filename);
-    }
-
-    txCharacteristic->setValue("ALL_DONE\n");
-    txCharacteristic->notify();
-    waitForAck();
+void sendFileWithAck() {
+  if(!LittleFS.begin(true)){
+    Serial.println("LittleFS Mount Failed");
+    return;
   }
+  Serial.println("LittleFS Mounted!");
+
+  File root = LittleFS.open("/");
+  if (!root || !root.isDirectory()) {
+    Serial.println("- failed to open directory");
+    return;
+  }
+
+  File file = root.openNextFile();
+
+  while (file) {
+
+    if (file.isDirectory()) {
+      file = root.openNextFile();   // ← 次のファイルへ（無限ループ防止）
+      continue;
+    } else {
+      Serial.println(file.name());
+      // ファイル内容をすべて表示
+      while (file.available()) {
+        String json = file.readString();
+        // Serial.println(json);
+
+        int totalLength = json.length();
+
+        const int chunkSize = 120;
+
+        for (int offset = 0; offset < totalLength; offset += chunkSize) {
+
+          int currentChunkSize = min(chunkSize, totalLength - offset);
+
+          uint8_t buffer[chunkSize];  // 最大120バイト
+
+          // String → uint8_t配列へコピー
+          memcpy(buffer, json.c_str() + offset, currentChunkSize);
+
+          // ここで buffer を送信する（例：BLEなど）
+          txCharacteristic->setValue(buffer, currentChunkSize);
+          txCharacteristic->notify();
+          waitForAck();
+
+          // デバッグ表示
+          Serial.print("Chunk: ");
+          Serial.write(buffer, currentChunkSize);
+          Serial.println();
+        }
+      }
+    }
+
+    file.close();                    // ← 各ファイルごとにclose
+    file = root.openNextFile();      // 次のファイル取得
+  }
+
+  Serial.println("All files listed.");
+  root.close();
+
+  txCharacteristic->setValue("ALL_DONE\n");
+  txCharacteristic->notify();
+  waitForAck();
+}
 
 class RxCharacteristicCallbacks : public BLECharacteristicCallbacks {
   void onWrite(BLECharacteristic *pChar) {

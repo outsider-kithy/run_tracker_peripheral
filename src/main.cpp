@@ -21,12 +21,6 @@ void setup() {
   M5.Lcd.setTextSize(2);
   M5.Lcd.println("Initializing...");
 
-  if(!LittleFS.begin(true)){
-    Serial.println("LittleFS Mount Failed");
-    return;
-  }
-  Serial.println("LittleFS Mounted!");
-
   setupGPS();
   setupSteps();
   setupTime();
@@ -79,7 +73,7 @@ void loop() {
         txCharacteristic->setValue("READY");
         txCharacteristic->notify();
         delay(100);
-        sendAllJsonFiles();
+        sendFileWithAck();
       }
 }
 
