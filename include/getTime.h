@@ -8,7 +8,6 @@ String startDate, endDate;
 extern m5::rtc_time_t startTime, endTime;
 m5::rtc_time_t startTime, endTime;
 
-bool firstPress = false;
 unsigned long startMillis = 0;
 unsigned long endMillis = 0;
 unsigned long elapsedSeconds = 0;
@@ -34,9 +33,9 @@ int toSeconds(const m5::rtc_time_t& t) {
 void updateTime() {
   M5.update();
 
-  if (M5.BtnA.wasReleased()) {
-
-    if (!isTracking) {
+  if(!isTracking){
+    if (M5.BtnA.wasReleased()) {
+    
       //開始時間をミリ秒として保存
       startMillis = millis();
       Serial.printf("START: %lu\n", startMillis);
@@ -44,10 +43,12 @@ void updateTime() {
       //開始時刻を文字列として保存
       startTime = M5.Rtc.getTime();
       startDate = rtcToString(M5.Rtc.getDate(), startTime);
-
       isTracking = true;
-
-    } else {
+      delay(50);
+      }
+  } else {
+    if(M5.BtnA.wasPressed()){
+      delay(50);
       //終了時刻をミリ秒として保存
       endMillis = millis();
      
@@ -61,9 +62,8 @@ void updateTime() {
       Serial.printf("Elapsed: %lu sec\n", elapsedSeconds);
 
       isTracking = false;
+      
     }
-  }
-
-  delay(50);
+  }    
 }
 

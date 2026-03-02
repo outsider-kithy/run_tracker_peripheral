@@ -42,6 +42,7 @@ void updateGPS(){
     // Aボタン押下で録画開始/停止をトグル
     if (M5.BtnA.wasPressed()) {
       isRecording = !isRecording;
+
       if (isRecording) {
         path.clear();
         totalDistance = 0;
