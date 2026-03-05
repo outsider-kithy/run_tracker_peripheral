@@ -3,7 +3,7 @@
 #include <M5Unified.h>
 
 // 加速度のしきい値（この値を超えたら1歩とカウント）
-const float STEP_THRESHOLD = 1.2;  
+const float STEP_THRESHOLD = 0.12;  
 // 1歩あたりの距離（m）※目安：歩幅約0.7m
 const float STEP_LENGTH = 0.7;     
 
