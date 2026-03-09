@@ -1,15 +1,15 @@
 #pragma once
 #include <Arduino.h>
 #include <M5Unified.h>
+#include "getTime.h"
+
+extern int steps;
+extern bool stepActive;
 
 // 加速度のしきい値（この値を超えたら1歩とカウント）
 const float STEP_THRESHOLD = 0.12;  
 // 1歩あたりの距離（m）※目安：歩幅約0.7m
 const float STEP_LENGTH = 0.7;     
-
-// 状態変数
-extern int steps;
-extern bool stepActive;
 
 int steps = 0;
 bool stepActive = false;
@@ -44,4 +44,15 @@ void updateSteps() {
   }
   
   delay(200);
+
+   if(!isTracking){
+    if (M5.BtnA.wasReleased()) {
+      delay(50);
+   } else {
+    if(M5.BtnA.wasPressed()){
+      delay(50);
+      steps *= 10;
+    }
+   }
+  }
 }
