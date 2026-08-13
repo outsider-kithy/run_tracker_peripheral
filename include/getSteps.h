@@ -3,9 +3,7 @@
 #include <M5Unified.h>
 
 // 加速度のしきい値（この値を超えたら1歩とカウント）
-const float STEP_THRESHOLD = 1.2;  
-// 1歩あたりの距離（m）※目安：歩幅約0.7m
-const float STEP_LENGTH = 0.7;     
+const float STEP_THRESHOLD = 0.9;   
 
 // 状態変数
 extern int steps;
@@ -23,7 +21,8 @@ void setupSteps() {
   delay(500);
 }
 
-void updateSteps() {
+//歩数カウントをスタート
+void startCountSteps() {
   M5.update();
 
   float accX, accY, accZ;
@@ -39,9 +38,16 @@ void updateSteps() {
   }
 
   // 一定値を下回ったら「次のステップ検出可能状態」に戻す
-  if (magnitude < 0.9) {
+  if (magnitude < 0.5) {
     stepActive = false;
   }
   
   delay(200);
+}
+
+//歩数カウントをストップ
+void stopCountSteps(){
+	M5.Lcd.setCursor(0, 60);
+	M5.Lcd.print(steps);
+	M5.Lcd.println(" steps");
 }

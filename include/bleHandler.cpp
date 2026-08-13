@@ -25,6 +25,7 @@ class MyServerCallbacks : public BLEServerCallbacks {
 };
 
 void initBLE() {
+  Serial.begin(9600);
   BLEDevice::init("M5Stick Run Tracker");
   pServer = BLEDevice::createServer();
   pServer->setCallbacks(new MyServerCallbacks());
@@ -70,9 +71,6 @@ void sendDataViaBLE(const std::vector<std::pair<double, double>>& path,
   // --- BLE特性に書き込み ---
   pCharacteristic->setValue(json.c_str());
   pCharacteristic->notify();  // 通知送信
-
-  M5.Lcd.println("BLE data sent!");
-  Serial.println("Sent via BLE:");
   Serial.println(json);
 }
 

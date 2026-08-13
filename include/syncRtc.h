@@ -1,7 +1,7 @@
 #pragma once
 #include <M5Unified.h>
-#include <WiFi.h>
 #include "time.h"
+#include <WiFi.h>
 #include <WiFiManager.h>
 
 // NSV領域に保存されたWi-Fi接続情報を読み出す
