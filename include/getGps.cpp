@@ -30,7 +30,7 @@ const int SAVE_INTERVAL = 60000;
 
 void setupGPS() {
   // GPSシリアル初期化
-  GPSserial.begin(115200, SERIAL_8N1, 33, 32);
+  GPSserial.begin(115200, SERIAL_8N1, 10, 9);
   // シリアル通信を初期化
   Serial.begin(9600);
   delay(500);

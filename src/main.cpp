@@ -3,8 +3,6 @@
 #include "getTime.h"
 #include "getGps.h"
 #include "bleHandler.h"
-#include "connectWifi.h"
-#include "syncRtc.h"
 #include "manageBattery.h"
 
 // Aボタンを押した回数
@@ -15,9 +13,11 @@ unsigned long lastOperationMillis = 0;
 const unsigned long SLEEP_TIMEOUT = 30000; // 30秒
 
 void setup() {
-  connectWifi();
   
   M5.begin();
+
+  M5.Power.setExtOutput(true);
+  delay(100);
   
   // バッテリー節約のため、画面の明るさを落とす
   M5.Display.setBrightness(32);
@@ -37,8 +37,7 @@ void setup() {
 
   //歩数カウントを初期化
   setupSteps();
-  //タイマーを初期化
-  setupTimer();
+ 
   //GPSを初期化
   setupGPS();
   // BLE初期化
