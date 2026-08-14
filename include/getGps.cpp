@@ -95,12 +95,13 @@ void updateGPS(){
                 );
                 totalDistance += dist;
             }
+			// Serial.print("Elapsed:");
+			// Serial.println(lastSaveTime);
+			// Serial.print(lat, 6);
+			// Serial.print(",");
+			// Serial.println(lng, 6);
+
 			// 新しい座標を保存
-			Serial.print("Elapsed:");
-			Serial.println(lastSaveTime);
-			Serial.print(lat, 6);
-			Serial.print(",");
-			Serial.println(lng, 6);
 			path.push_back({lat, lng});
         }
 	}
