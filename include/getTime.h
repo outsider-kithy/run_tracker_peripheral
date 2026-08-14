@@ -1,6 +1,6 @@
 #pragma once
 #include <M5Unified.h>
-#include "rtc_sync.h"
+#include "syncRtc.h"
 
 extern String startDate, endDate;
 String startDate, endDate;
