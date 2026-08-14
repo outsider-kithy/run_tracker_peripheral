@@ -7,7 +7,7 @@
 
 #define SERVICE_UUID "12345678-1234-5678-1234-56789abcdef0" // サービスUUID
 #define TX_UUID "abcd1234-5678-90ab-cdef-1234567890ac" // 送信用キャラクタリステックのUUID
-#define RX_UUID "09876543-2109-abcd-efgh-ijklmnopqrst" // 受信用キャラクタリスティックのUUID
+#define RX_UUID "98765432-1098-abcd-ef12-098765432109" // 受信用キャラクタリスティックのUUID
 
 BLECharacteristic* txCharacteristic; // 送信用キャラクタリスティック
 BLECharacteristic* rxCharacteristic; // 受信用キャラクタリスティック
