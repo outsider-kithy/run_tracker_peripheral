@@ -19,6 +19,7 @@ void setBatteryCharge(){
     } else {
       M5.Lcd.setTextColor(RED);
     }
+	M5.Lcd.fillRect(140, 110, 240, 240, BLACK);
 	M5.Lcd.setCursor(140, 110);
     M5.Lcd.print("Bat:");
     M5.Lcd.printf("%d%%", batteryLevel);
@@ -28,7 +29,6 @@ void setBatteryCharge(){
 void updateBatteryCharge(){
 	if (millis() - previousSaveMillis >= BATTERY_INTERVAL) {
 		previousSaveMillis = millis();
-		M5.Lcd.fillRect(140, 110, 240, 240, BLACK);
 		setBatteryCharge();
 	}
 }
