@@ -2,6 +2,7 @@
 #include "getSteps.h"
 #include "getTime.h"
 #include "getGps.h"
+#include "jsonHandler.h"
 #include "bleHandler.h"
 #include "manageBattery.h"
 
@@ -18,6 +19,9 @@ void setup() {
 
   M5.Power.setExtOutput(true);
   delay(100);
+
+  // すでにM5 Stickに保存されているJSONファイルを表示
+  listFilesFromRoot();
   
   // バッテリー節約のため、画面の明るさを落とす
   M5.Display.setBrightness(32);
@@ -88,8 +92,8 @@ void loop() {
 			stopTimer();
 			// GPSストップ
 			stopGPS();
-			// BLEでデータ送信
-			sendDataViaBLE(path, totalDistance, steps, elapsed);
+			// 走行データをJSONに保存
+			saveRunDataToFile(path, totalDistance, steps, elapsed);
 			M5.Lcd.setCursor(0, 100);
 			M5.Lcd.setTextColor(RED);
 			M5.Lcd.println("Data was saved!");
@@ -117,5 +121,22 @@ void loop() {
 			
 		}	
 	}
+
+	// セントラルからSYNCコマンドが送られてきたら
+	if (syncRequested) {
+        syncRequested = false;
+        txCharacteristic->setValue("READY");
+        txCharacteristic->notify();
+        delay(100);
+        sendFileWithAck();
+    }
+
+	// セントラルからDELETEコマンドが送られてきたら
+    if(deleteRequested){
+		txCharacteristic->setValue("DELETE_processing...");
+		txCharacteristic->notify();
+		delay(100);
+		deleteAllJsonFiles();
+    }
 }
 
