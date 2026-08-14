@@ -2,6 +2,7 @@
 #include "getSteps.h"
 #include "getTime.h"
 #include "getGps.h"
+#include "jsonHandler.h"
 #include "bleHandler.h"
 #include "connectWifi.h"
 #include "syncRtc.h"
