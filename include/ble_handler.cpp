@@ -12,7 +12,7 @@
 
 #define SERVICE_UUID "12345678-1234-5678-1234-56789abcdef0"
 #define TX_UUID "abcd1234-5678-90ab-cdef-1234567890ac"
-#define RX_UUID "abcd1234-5678-90ab-cdef-1234567890ad"
+#define RX_UUID "98765432-1098-abcd-ef12-098765432109"
 
 BLECharacteristic* txCharacteristic;
 BLECharacteristic* rxCharacteristic;
