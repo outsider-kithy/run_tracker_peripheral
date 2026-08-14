@@ -55,10 +55,10 @@ void setup() {
 void loop() {
   	M5.update();
 	updateGPS();
-	//電池残量を更新
+	//　バッテリー残量を更新
 	updateBatteryCharge();
 	
-	// 30秒でスリープモードに移行
+	// 最後のボタン操作から30秒で画面オフ
 	if (millis() - lastOperationMillis >= SLEEP_TIMEOUT) {
 		previousSaveMillis = millis();
 		displayOff();
