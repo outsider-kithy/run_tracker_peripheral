@@ -100,27 +100,19 @@ void loop() {
 			M5.Lcd.setTextColor(RED);
 			M5.Lcd.println("Data was saved!");
 		}
-		// 3回目(画面とデータをリセット)
+		// 3回目(データをリセット)
 		else if (pressCount == 3) {
 
 			pressCount = 0;
-
-			M5.Lcd.fillScreen(BLACK);
-			M5.Lcd.setTextColor(WHITE);
-			M5.Lcd.setCursor(0,0);
-			M5.Lcd.println("Initializing...");
-
-			setBatteryCharge();
-
 			path.clear();
 			totalDistance = 0.0;
 			steps = 0;
 			elapsed = 0;
 			startDate, endDate = "";
 
-			M5.Lcd.setCursor(0, 20);
-			M5.Lcd.println("Press A button!");
-			
+			// ディープスリープして1秒後に再起動
+			esp_sleep_enable_timer_wakeup(1000000);
+			esp_deep_sleep_start();
 		}	
 	}
 

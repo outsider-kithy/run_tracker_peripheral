@@ -51,31 +51,42 @@ void saveRunDataToFile(const std::vector<std::pair<double, double>>& path,
 }
 
 // ルートディレクトリにあるJSONファイルを一覧表示
-void listFilesFromRoot(){
-  if(!LittleFS.begin(true)){
+void listFilesFromRoot() {
+  if (!LittleFS.begin(true)) {
     Serial.println("LittleFS Mount Failed");
     return;
   }
+
   Serial.println("LittleFS Mounted!");
-    File root = LittleFS.open("/");
+
+  File root = LittleFS.open("/");
   if (!root || !root.isDirectory()) {
     Serial.println("- failed to open directory");
     return;
   }
 
+  bool fileFound = false;
+
+  // ファイルがなくなるまで繰り返す
   File file = root.openNextFile();
 
   while (file) {
-    if (file.isDirectory()) {
-      file = root.openNextFile();   // ← 次のファイルへ（無限ループ防止）
-      continue;
-    } else {
+
+    // ディレクトリは無視
+    if (!file.isDirectory()) {
       Serial.println(file.name());
+      fileFound = true;
     }
+
     file.close();
+
+    // 次のファイルを取得
+    file = root.openNextFile();
   }
-  if(!file){
-    Serial.println("No JSON Files.");
+
+  if (!fileFound) {
+    Serial.println("No Files.");
   }
+
   root.close();
 }
