@@ -5,13 +5,13 @@
 #include <WiFiManager.h>
 
 // NSV領域に保存されたWi-Fi接続情報を読み出す
-void ensureWiFiConfigured() {
-    WiFiManager wm;
+// void ensureWiFiConfigured() {
+//     WiFiManager wm;
 
-    if (!wm.autoConnect("M5-Setup")) {
-        ESP.restart();
-    }
-}
+//     if (!wm.autoConnect("M5-Setup")) {
+//         ESP.restart();
+//     }
+// }
 
 void syncRTCFromNTP() {
     WiFi.begin();

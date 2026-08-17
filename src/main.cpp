@@ -4,7 +4,7 @@
 #include "getGps.h"
 #include "jsonHandler.h"
 #include "bleHandler.h"
-#include "connectWifi.h"
+// #include "connectWifi.h"
 #include "syncRtc.h"
 #include "manageBattery.h"
 
@@ -16,7 +16,7 @@ unsigned long lastOperationMillis = 0;
 const unsigned long SLEEP_TIMEOUT = 30000; // 30秒
 
 void setup() {
-  connectWifi();
+  //connectWifi();
   
   M5.begin();
 
@@ -132,5 +132,10 @@ void loop() {
 		delay(100);
 		deleteAllJsonFiles();
     }
+
+	// Bボタンが押されたら、キャリブレーションを実行
+	if (M5.BtnB.wasPressed()) {
+		calibrateStepThreshold();
+	}
 }
 
