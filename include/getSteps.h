@@ -110,10 +110,6 @@ void startCountSteps() {
 
     float accX, accY, accZ;
 
-    if (!M5.Imu.getAccel(&accX, &accY, &accZ)) {
-        return;
-    }
-
     // 加速度ベクトル
     float magnitude = sqrt(accX * accX + accY * accY + accZ * accZ);
 
