@@ -7,7 +7,7 @@ extern void displayOn();
 
 // バッテリー残量を更新する頻度
 unsigned long previousSaveMillis = 0;
-const unsigned long BATTERY_INTERVAL = 60000; // 60秒
+const unsigned long BATTERY_INTERVAL = 120000; // 120秒
 
 // バッテリー残量を取得して表示
 void setBatteryCharge(){

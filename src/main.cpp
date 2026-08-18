@@ -13,7 +13,7 @@ int pressCount = 0;
 
 // ディスプレイをオフにする時間
 unsigned long lastOperationMillis = 0;
-const unsigned long SLEEP_TIMEOUT = 30000; // 30秒
+const unsigned long SLEEP_TIMEOUT = 120000; // 120秒
 
 void setup() {
   //connectWifi();
@@ -54,6 +54,7 @@ void setup() {
 
 void loop() {
   	M5.update();
+	updateSteps();
 	updateGPS();
 	//　バッテリー残量を更新
 	updateBatteryCharge();
@@ -78,7 +79,8 @@ void loop() {
 			M5.Lcd.setCursor(0, 40);
 			M5.Lcd.setTextColor(YELLOW);
 			M5.Lcd.println("Tracking Start!");
-			//歩数カウントスタート
+			
+			//歩数カウントリセット
 			startCountSteps();
 			//タイマースタート
 			startTimer();
