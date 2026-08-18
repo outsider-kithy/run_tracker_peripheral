@@ -11,7 +11,7 @@ int pressCount = 0;
 
 // ディスプレイをオフにする時間
 unsigned long lastOperationMillis = 0;
-const unsigned long SLEEP_TIMEOUT = 30000; // 30秒
+const unsigned long SLEEP_TIMEOUT = 120000; // 120秒
 
 void setup() {
   
@@ -52,11 +52,12 @@ void setup() {
 
 void loop() {
   	M5.update();
+	updateSteps();
 	updateGPS();
 	//電池残量を更新
 	updateBatteryCharge();
 	
-	// 30秒でスリープモードに移行
+	// 120秒でスリープモードに移行
 	if (millis() - lastOperationMillis >= SLEEP_TIMEOUT) {
 		previousSaveMillis = millis();
 		displayOff();
@@ -76,8 +77,9 @@ void loop() {
 			M5.Lcd.setCursor(0, 40);
 			M5.Lcd.setTextColor(YELLOW);
 			M5.Lcd.println("Tracking Start!");
-			//歩数カウントスタート
-			startCountSteps();
+			
+			//歩数カウントをリセット
+			steps = 0;
 			//タイマースタート
 			startTimer();
 			//GPSスタート
