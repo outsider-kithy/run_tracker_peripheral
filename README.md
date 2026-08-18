@@ -8,7 +8,7 @@ M5Stickでランニングトラッカー
 |------|------|-----|
 | M5 StickC Plus2もしくはM5 StickS3 | 1 | https://docs.m5stack.com/ja/core/m5stickc_plus, https://docs.m5stack.com/ja/core/StickS3 |
 | Unit GPS v1.1 | 1 | https://docs.m5stack.com/ja/unit/Unit-GPS%20v1.1 |
-| Groveケーブル(5cm) | 1 |　https://docs.m5stack.com/ja/accessory/cable/grove_cable |
+| Groveケーブル(5cm) | 1 | https://docs.m5stack.com/ja/accessory/cable/grove_cable |
 
 
 ## Branch
