@@ -68,8 +68,8 @@ void calibrateStepThreshold() {
 
     M5.Lcd.fillScreen(BLACK);
     M5.Lcd.setCursor(0, 20);
+	M5.Lcd.setTextColor(WHITE);
     M5.Lcd.println("Calibration OK");
-
     M5.Lcd.printf("Threshold: %.3f", STEP_THRESHOLD);
     delay(20);
 	M5.Lcd.fillScreen(BLACK);
@@ -142,6 +142,7 @@ void startCountSteps(){
 // 歩数カウント停止
 void stopCountSteps() {
     M5.Lcd.setCursor(0, 60);
+	M5.Lcd.setTextColor(WHITE);
     M5.Lcd.print(steps);
     M5.Lcd.println(" steps, ");
 }

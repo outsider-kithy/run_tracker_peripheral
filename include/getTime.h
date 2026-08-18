@@ -52,6 +52,7 @@ void stopTimer(){
 	int minutes = ((int)elapsed % 3600) / 60;
 	int seconds = (int)elapsed % 60;
 	M5.Lcd.setCursor(150, 60);
+	M5.Lcd.setTextColor(WHITE);
 	M5.Lcd.print(elapsed);
 	M5.Lcd.print(" s, ");
 }
