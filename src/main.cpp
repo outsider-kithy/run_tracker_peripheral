@@ -34,6 +34,7 @@ void setup() {
   M5.Lcd.setRotation(3);
   M5.Lcd.setTextSize(2);
   M5.Lcd.setCursor(0,0);
+  M5.Lcd.setTextColor(WHITE);
   M5.Lcd.println("Initializing...");
 
   // バッテリー残量を表示
@@ -78,8 +79,8 @@ void loop() {
 			M5.Lcd.setTextColor(YELLOW);
 			M5.Lcd.println("Tracking Start!");
 			
-			//歩数カウントをリセット
-			steps = 0;
+			//歩数カウントスタート
+			startCountSteps();
 			//タイマースタート
 			startTimer();
 			//GPSスタート

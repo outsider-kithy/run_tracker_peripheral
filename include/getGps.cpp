@@ -108,6 +108,7 @@ void updateGPS(){
 
 void stopGPS(){
 	M5.Lcd.setCursor(0, 80);
+	M5.Lcd.setTextColor(WHITE);
 	M5.Lcd.print(totalDistance);
 	M5.Lcd.println(" m");
 	for (size_t i = 0; i < path.size(); i++) {
